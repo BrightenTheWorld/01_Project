@@ -1,0 +1,104 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>
+Read CSV with Pandas using PyScript
+</title>
+<link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+<script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+
+<style type="text/css">
+table.dataframe th {
+  background-color: #EA6153 !important;
+  color: white !important;
+  text-align:center !important;
+  padding: 5px 15px;
+  font-size:9pt !important;
+}
+table.dataframe td {
+  color: black !important;
+  text-align:center !important;
+  padding: 5px 15px;
+  font-size:9pt !important;
+}
+
+table.dataframe tr {
+    background-color: #FFFFFF !important;
+}
+
+table.dataframe tr:nth-child(odd) {
+    background-color: #E9E9E9 !important;
+}
+
+</style>
+
+<py-env>
+    - pandas
+    - numpy
+    - matplotlib
+</py-env>
+</head>
+
+<body style="padding:20px;">
+  <h2>파이스크립트에서 판다스(Pandas)로 CSV 읽기</h2>
+  <div id="pltdiv"></div>
+  <div id="csv" style="margin-top:10px"></div>
+  <py-script>
+    import pandas as pd
+    from pyodide.http import open_url
+
+    df = pd.read_csv(open_url("https://raw.githubusercontent.com/BrightenTheWorld/01_Project/main/df.csv"))
+    phi = pd.read_csv(open_url("https://raw.githubusercontent.com/BrightenTheWorld/01_Project/main/phi.csv"))
+    DataFrame = pd.concat([df,phi],axis=1)
+    csv = Element('csv')
+    csv.write(DataFrame)
+
+  </py-script>
+
+  <h2>읽은 CSV로 그래프 플롯하기</h2>
+
+  <py-script>
+    import matplotlib.pyplot as plt
+    import numpy as np
+    plt.rcParams.update({'font.size': 7})
+
+    fig_01 = plt.figure(figsize=(10, 5))
+    plt.subplot(2, 1, 1)                # nrows=2, ncols=1, index=1
+
+
+    plt.plot(df['beta'], df['M1'], label='D=0.01' )
+    plt.plot(df['beta'], df['M2'], label='D=0.2' )
+    plt.plot(df['beta'], df['M3'], label='D=0.4' )
+    plt.plot(df['beta'], df['M4'], label='D=0.707' )
+
+    plt.xlim([0, 2])      # X축의 범위: [xmin, xmax]
+    plt.ylim([0, np.pi])     # Y축의 범위: [ymin, ymax]
+    plt.grid(True)
+
+    pltdiv = Element('pltdiv')
+    pltdiv.write(fig_01)
+  </py-script>
+
+  <py-script>
+    plt.rcParams.update({'font.size': 7})
+    fig_02 = plt.figure(figsize=(10, 5))
+
+    plt.subplot(2, 1, 2)                # nrows=2, ncols=1, index=2
+
+    plt.plot(df['beta'], phi['phi_1'], label='D=0.01' )
+    plt.plot(df['beta'], phi['phi_2'], label='D=0.2' )
+    plt.plot(df['beta'], phi['phi_3'], label='D=0.4' )
+    plt.plot(df['beta'], phi['phi_4'], label='D=0.707' )
+
+    plt.xlim([0, 2])      # X축의 범위: [xmin, xmax]
+    plt.ylim([0, np.pi])     # Y축의 범위: [ymin, ymax]
+    plt.grid(True)
+
+    pltdiv = Element('pltdiv')
+    pltdiv.write(fig_02)
+  </py-script>
+
+
+</body>
+
+</html>

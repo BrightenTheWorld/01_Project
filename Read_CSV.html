@@ -1,0 +1,66 @@
+<html>
+<head>
+  <meta charset="utf-8">
+<title>
+Read CSV with Pandas using PyScript
+</title>
+<link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+<script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+
+<style type="text/css">
+table.dataframe th {
+  background-color: #EA6153 !important;
+  color: white !important;
+  text-align:center !important;
+  padding: 5px 15px;
+  font-size:9pt !important;
+}
+table.dataframe td {
+  color: black !important;
+  text-align:center !important;
+  padding: 5px 15px;
+  font-size:9pt !important;
+}
+
+table.dataframe tr {
+    background-color: #FFFFFF !important;
+}
+
+table.dataframe tr:nth-child(odd) {
+    background-color: #E9E9E9 !important;
+}
+
+</style>
+
+<py-env>
+    - pandas
+</py-env>
+</head>
+<body style="padding:20px;">
+  <h3>파이스크립트에서 판다스(Pandas)로 CSV 읽기</h3>
+  <div id="csv" style="margin-top:10px"></div>
+  <py-script>
+    import pandas as pd
+    from pyodide.http import open_url
+
+    # URL 에서 csv 데이터를 읽어 판다스 배열로 변환합니다.
+    df = pd.read_csv(open_url("https://raw.githubusercontent.com/BrightenTheWorld/01_Project/main/df.csv"))
+
+    # 출력할 HTML 요소를 선택
+    csv = Element('csv')
+
+    # 해당 HTML 요소에 결과를 출력합니다.
+    csv.write(df)
+  </py-script>
+
+  <py-script>
+    phi = pd.read_csv(open_url("https://raw.githubusercontent.com/BrightenTheWorld/01_Project/main/phi.csv"))
+    csv.write(phi)
+    DataFrame = pd.concat([df,phi],axis=1)
+    csv.write(DataFrame)
+
+  </py-script>
+
+</body>
+
+</html>
