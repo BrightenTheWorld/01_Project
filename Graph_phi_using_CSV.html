@@ -67,6 +67,11 @@ table.dataframe tr:nth-child(odd) {
     plt.plot(df['beta'], phi['phi_2'], label='D=0.2' )
     plt.plot(df['beta'], phi['phi_3'], label='D=0.4' )
     plt.plot(df['beta'], phi['phi_4'], label='D=0.707' )
+    plt.legend()
+
+    plt.title("Response curves for a viscously damped single-degree-of-freedom system.")
+    plt.xlabel(r'$\frac{\omega}{\omega_n}$')
+    plt.ylabel(r"$\varphi$")
 
     plt.xlim([0, 2])      # X축의 범위: [xmin, xmax]
     plt.ylim([0, np.pi])     # Y축의 범위: [ymin, ymax]
@@ -74,8 +79,8 @@ table.dataframe tr:nth-child(odd) {
 
     pltdiv = Element('pltdiv')
     pltdiv.write(fig)
-  </py-script>
 
+  </py-script>
 
 </body>
 

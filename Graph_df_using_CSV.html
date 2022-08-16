@@ -59,14 +59,19 @@ table.dataframe tr:nth-child(odd) {
   <py-script>
     import matplotlib.pyplot as plt
     import numpy as np
-    plt.rcParams.update({'font.size': 7})
 
+    plt.rcParams.update({'font.size': 7})
     fig = plt.figure(figsize=(10, 5))
 
     plt.plot(df['beta'], df['M1'], label='D=0.01' )
     plt.plot(df['beta'], df['M2'], label='D=0.2' )
     plt.plot(df['beta'], df['M3'], label='D=0.4' )
     plt.plot(df['beta'], df['M4'], label='D=0.707' )
+    plt.legend()
+
+    plt.title("Response curves for a viscously damped single-degree-of-freedom system.")
+    plt.xlabel(r'$\frac{\omega}{\omega_n}$')
+    plt.ylabel(r"$M=\frac{A}{Q_0/k}$")
 
     plt.xlim([0, 2])      # X축의 범위: [xmin, xmax]
     plt.ylim([0, np.pi])     # Y축의 범위: [ymin, ymax]
@@ -74,8 +79,8 @@ table.dataframe tr:nth-child(odd) {
 
     pltdiv = Element('pltdiv')
     pltdiv.write(fig)
-  </py-script>
 
+  </py-script>
 
 </body>
 
