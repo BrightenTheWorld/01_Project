@@ -32,7 +32,7 @@ phi_2 = np.arctan2((2 * D2 * beta), (1 - beta ** 2))
 phi_3 = np.arctan2((2 * D3 * beta), (1 - beta ** 2))
 phi_4 = np.arctan2((2 * D4 * beta), (1 - beta ** 2))
 
-phi = pd.DataFrame({"phi_1":phi_1, "phi_2":phi_2, "pi_3":phi_3, "phi_4":phi_4})
+phi = pd.DataFrame({"phi_1":phi_1, "phi_2":phi_2, "phi_3":phi_3, "phi_4":phi_4})
 print(phi)
 
 # 그래프
@@ -66,5 +66,8 @@ plt.xlim([0, 2])      # X축의 범위: [xmin, xmax]
 plt.ylim([0, 3.141592654])     # Y축의 범위: [ymin, ymax]
 plt.grid(True)
 
-plt.savefig('Response_curves.png')
+# 플롯된 figure를 .png 파일로 저장 하려면 아래 코드를 주석 제거
+# plt.savefig('Response_curves.png')
 plt.show()
+
+
