@@ -58,9 +58,8 @@ table.dataframe tr:nth-child(odd) {
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True, figsize=(10,5))
+    fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(10,5))
     fig.suptitle('Response curves for a viscously damped single-degree-of-freedom system', fontsize='x-large')
-
 
     plt.xlim([0, 2])      # X축의 범위: [xmin, xmax]
     plt.ylim([0, np.pi])     # Y축의 범위: [ymin, ymax]
@@ -69,6 +68,9 @@ table.dataframe tr:nth-child(odd) {
     ax1.plot(df['beta'], df['M2'], label='D=0.2' )
     ax1.plot(df['beta'], df['M3'], label='D=0.4' )
     ax1.plot(df['beta'], df['M4'], label='D=0.707' )
+    plt.setp(ax1, xlabel=r'$\frac{\omega}{\omega_n}$')
+    plt.setp(ax1, ylabel=r"$M=\frac{A}{Q_0/k}$")
+    plt.setp(ax1, ylim=([0,np.pi]))
     ax1.grid(True)
     ax1.legend()
 
@@ -76,6 +78,8 @@ table.dataframe tr:nth-child(odd) {
     ax2.plot(df['beta'], df['phi_2'], label='D=0.2' )
     ax2.plot(df['beta'], df['phi_3'], label='D=0.4' )
     ax2.plot(df['beta'], df['phi_4'], label='D=0.707' )
+    plt.setp(ax2, xlabel=r'$\frac{\omega}{\omega_n}$')
+    plt.setp(ax2, ylabel=r"$\varphi$")
     ax2.grid(True)
     ax2.legend()
 
