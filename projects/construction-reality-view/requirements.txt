@@ -1,0 +1,7 @@
+numpy
+Pillow
+opencv-python
+jax==0.6.2
+jaxlib==0.6.2
+tapnet @ git+https://github.com/google-deepmind/tapnet.git@ceedd60bb9f6c9f7c74796e4445aff6c6ddf7c9b
+einops

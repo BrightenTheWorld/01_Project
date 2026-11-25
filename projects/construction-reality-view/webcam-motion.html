@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><title>웹캠 변위 실험</title>
+<style>body{max-width:960px;margin:36px auto;padding:0 16px;font:16px system-ui;color:#152536}canvas{width:100%;background:#172737;cursor:crosshair}button,input{margin:4px;padding:6px}output{display:block;margin:12px 0}select{max-width:100%}</style>
+<h1>웹캠 변위 실험</h1>
+<button id="demo">모의 진동</button><button id="live">웹캠 시작</button><select id="devices" aria-label="카메라"><option value="">기본 카메라</option></select><button id="scan">카메라 목록 새로고침</button><button id="stop">카메라 끄기</button>
+<label>녹화 영상 <input id="file" type="file" accept="video/*"></label>
+<p>화면에서 움직이는 표식, 고정 표식 순으로 클릭하세요. 두 표식은 같은 평면에 놓고, 기준 표식은 카메라 움직임을 확인할 수 있는 곳에 둡니다.</p>
+<label>영상 축척 (px/mm, 선택) <input id="scale" type="number" min="0" step="any"></label>
+<button id="reset">표식 재선택</button><button id="export">CSV 저장</button>
+<output id="status" aria-live="polite">웹캠 또는 모의 진동을 선택하세요.</output>
+<canvas id="view" width="640" height="360"></canvas><video id="video" muted playsinline hidden></video>
+<script>
+const el = id => document.getElementById(id);
+const canvas = el('view'), ctx = canvas.getContext('2d', {willReadFrequently:true});
+const video = el('video'), status = el('status');
+const width = 640, height = 360, radius = 8, range = 12;
+let stream, url, run = 0, pixels, targets = [], rows = [], firstTime, mode;
+function reset() { targets = []; rows = []; firstTime = undefined; }
+function stop() {
+  run++; stream?.getTracks().forEach(track => track.stop()); stream = undefined;
+  video.pause(); video.srcObject = null; video.removeAttribute('src');
+  if (url) URL.revokeObjectURL(url);
+  url = undefined; pixels = undefined; reset();
+  ctx.clearRect(0,0,width,height);
+}
+function mono(data) {
+  const gray = new Uint8Array(width * height);
+  for (let i = 0; i < gray.length; i++) gray[i] = (data[4*i]*77 + data[4*i+1]*150 + data[4*i+2]*29) >> 8;
+  return gray;
+}
+function patch(image, x, y) {
+  const result = [];
+  for (let dy = -radius; dy <= radius; dy += 2)
+    for (let dx = -radius; dx <= radius; dx += 2) result.push(image[(y+dy)*width+x+dx]);
+  return result;
+}
+function track(image, target) {
+  let best = Infinity, next;
+  for (let y = Math.max(radius,target.y-range); y <= Math.min(height-radius-1,target.y+range); y++)
+    for (let x = Math.max(radius,target.x-range); x <= Math.min(width-radius-1,target.x+range); x++) {
+      let error = 0, i = 0;
+      for (let dy = -radius; dy <= radius; dy += 2)
+        for (let dx = -radius; dx <= radius; dx += 2) error += (image[(y+dy)*width+x+dx]-target.pattern[i++])**2;
+      if (error < best) { best = error; next = {x,y}; }
+    }
+  if (best / target.pattern.length > 1600) return false;
+  Object.assign(target,next); return true;
+}
+function measure(time) {
+  pixels = mono(ctx.getImageData(0,0,width,height).data);
+  const valid = targets.map(target => track(pixels,target));
+  targets.forEach(({x,y},i) => {
+    ctx.strokeStyle = valid[i] ? '#4afaaf' : '#ff6868';
+    ctx.strokeRect(x-radius,y-radius,2*radius,2*radius);
+    ctx.fillStyle = ctx.strokeStyle; ctx.fillText(i ? 'REF' : 'TARGET',x+11,y);
+  });
+  if (targets.length !== 2) { status.value = mode + ' · ' + (targets.length ? '고정 표식을 클릭하세요.' : '움직이는 표식을 클릭하세요.'); return; }
+  firstTime ??= time;
+  const [a,b] = targets, scale = Number(el('scale').value);
+  if (!valid.every(Boolean)) {
+    rows.push([time-firstTime,'','','','',0]);
+    status.value = '추적 실패 · 필요하면 표식을 다시 선택하세요.'; return;
+  }
+  const x = (a.x-a.x0)-(b.x-b.x0), y = (a.y-a.y0)-(b.y-b.y0);
+  rows.push([time-firstTime,x,y,scale>0?x/scale:'',scale>0?y/scale:'',1]);
+  status.value = mode + ' · X ' + x + ' px · Y ' + y + ' px' +
+    (scale>0 ? ' · ' + (x/scale).toFixed(2) + ', ' + (y/scale).toFixed(2) + ' mm' : '') +
+    ' · 기록 ' + rows.length + '개';
+}
+canvas.onclick = event => {
+  if (!pixels || targets.length === 2) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((event.clientX-rect.left)*width/rect.width), y = Math.floor((event.clientY-rect.top)*height/rect.height);
+  if (x<radius || x>=width-radius || y<radius || y>=height-radius) return;
+  const pattern = patch(pixels,x,y);
+  if (Math.max(...pattern)-Math.min(...pattern)<45) return;
+  targets.push({x,y,x0:x,y0:y,pattern});
+};
+function displayVideo(id) {
+  if (id !== run || video.paused || video.ended) return;
+  const render = (now, info) => {
+    if (id !== run || video.paused || video.ended) return;
+    const factor = Math.min(width/video.videoWidth,height/video.videoHeight);
+    const w = video.videoWidth*factor, h = video.videoHeight*factor;
+    ctx.fillStyle = '#172737'; ctx.fillRect(0,0,width,height);
+    ctx.drawImage(video,(width-w)/2,(height-h)/2,w,h);
+    measure(info.mediaTime);
+    displayVideo(id);
+  };
+  video.requestVideoFrameCallback(render);
+}
+async function play(id) { await video.play(); if (id === run) displayVideo(id); }
+async function refreshDevices(selected = el('devices').value) {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const cameras = devices.filter(item => item.kind === 'videoinput');
+  const options = cameras.filter(item => item.deviceId && item.deviceId !== 'default');
+  el('devices').replaceChildren(new Option('기본 카메라', ''), ...options.map((item,index) =>
+    new Option(item.label || ('카메라 ' + (index+1)), item.deviceId)));
+  if (options.some(item => item.deviceId === selected)) el('devices').value = selected;
+  return cameras.length;
+}
+el('scan').onclick = async () => {
+  try {
+    const count = await refreshDevices();
+    status.value = count ? '카메라를 선택하고 웹캠 시작을 누르세요.' : '브라우저에서 카메라를 찾지 못했습니다.';
+  } catch (error) { status.value = '목록 조회 실패 · ' + error.message; }
+};
+el('stop').onclick = () => {
+  const recorded = rows;
+  stop(); rows = recorded;
+  status.value = '입력을 종료했습니다.' + (rows.length ? ' CSV를 저장할 수 있습니다.' : '');
+};
+el('live').onclick = async () => {
+  if (el('live').disabled) return;
+  const device = el('devices').value;
+  stop(); const id = run;
+  el('live').disabled = true;
+  status.value = '카메라를 여는 중…';
+  try {
+    const input = await navigator.mediaDevices.getUserMedia({audio:false,video:device?{deviceId:{exact:device}}:true});
+    if (id !== run) { input.getTracks().forEach(track=>track.stop()); return; }
+    stream = input; video.srcObject = stream;
+    const active = input.getVideoTracks()[0], settings = active.getSettings();
+    mode = (active.label || '웹캠') + (settings.frameRate ? ' · ' + settings.frameRate + ' FPS 설정' : '');
+    await play(id);
+    await refreshDevices(settings.deviceId).catch(() => {});
+  } catch(error) {
+    if (id !== run) return;
+    stop();
+    status.value = error.name === 'NotReadableError' || /device in use/i.test(error.message)
+      ? '카메라를 시작할 수 없습니다. 카메라를 사용 중인 앱이나 탭을 닫거나 목록에서 다른 카메라를 선택해 다시 시도하세요.'
+      : '웹캠 열기 실패 · ' + error.message;
+    await refreshDevices(device).catch(() => {});
+  } finally { el('live').disabled = false; }
+};
+navigator.mediaDevices?.addEventListener('devicechange', () => refreshDevices().catch(() => {}));
+refreshDevices().catch(() => {});
+el('file').onchange = async event => {
+  const file = event.target.files[0]; if (!file) return;
+  stop(); const id = run; mode = '녹화 영상';
+  url = URL.createObjectURL(file); video.src = url;
+  try { await play(id); } catch(error) { if (id===run) status.value = '영상 재생 실패 · ' + error.message; }
+};
+el('demo').onclick = () => {
+  stop(); const id = run, start = performance.now(); mode = '모의 진동 (약 ±14 px, 0.7 Hz)';
+  function marker(x,y) {
+    ctx.fillStyle = '#fff'; ctx.fillRect(x-11,y-11,23,23);
+    ctx.fillStyle = '#111'; ctx.fillRect(x-6,y-6,12,12);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x-2,y-2,4,4);
+  }
+  function frame(now) {
+    if (id !== run) return;
+    const t = (now-start)/1000;
+    ctx.fillStyle = '#172737'; ctx.fillRect(0,0,width,height);
+    marker(200+Math.round(14*Math.sin(2*Math.PI*0.7*t)),180); marker(430,180);
+    measure(t); requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+};
+el('reset').onclick = reset;
+el('export').onclick = () => {
+  if (!rows.length) { status.value = '두 표식을 선택해 데이터를 먼저 기록하세요.'; return; }
+  const blob = new Blob(['time_s,dx_px,dy_px,dx_mm,dy_mm,valid\n',rows.map(row=>row.join(',')).join('\n')],{type:'text/csv'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob); link.download = 'displacement.csv'; link.click();
+  setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+};
+</script></html>

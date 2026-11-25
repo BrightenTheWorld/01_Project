@@ -1,0 +1,38 @@
+{
+  "clip": "bike-packing",
+  "resolution": [
+    910,
+    480
+  ],
+  "baseline": {
+    "visible_truth_frames": 390,
+    "missed_visible_frames": 225,
+    "false_visible_frames": 41,
+    "median_reported_error_px": 91.02500607558096,
+    "within_4px_rate": 0.03076923076923077,
+    "recovery_frames_after_occlusion": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "baseline_processing_sec": 0.37592469999799505,
+  "ai": {
+    "visible_truth_frames": 390,
+    "missed_visible_frames": 96,
+    "false_visible_frames": 79,
+    "median_reported_error_px": 7.042759447515523,
+    "within_4px_rate": 0.23333333333333334,
+    "recovery_frames_after_occlusion": [
+      null,
+      null,
+      7,
+      0,
+      null,
+      null
+    ]
+  }
+}

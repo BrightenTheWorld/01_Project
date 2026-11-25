@@ -4,6 +4,34 @@
 
 테슬라 리얼리티 뷰는 연구의 출발점이다. 테슬라는 카메라 시각 특징을 주행 모델과 공유하고 별도의 조건부 Mean Flow 기반 모델로 화면을 생성한다고 설명했다. 공개 자료에서 제품 코드·가중치나 특정 논문의 직접 채택은 확인되지 않았다. 아래 구현은 두 기능을 공개 도구로 검증하기 위한 연구 설계다. [테슬라 시연](https://www.youtube.com/watch?v=eNBqkc7V1nU) · [테슬라 구현 설명](https://www.nitter.gq/elonmusk/status/2124458557525397780) · [MeanFlow 연구](https://proceedings.neurips.cc/paper_files/paper/2025/hash/6d13e085b79d454da5910e4ca82a3d9d-Abstract-Conference.html)
 
+## 진행 현황
+
+```mermaid
+flowchart TD
+    A["완료 · Windows CPU 개발환경과 TAPIR 추론"] --> B["완료 · 합성 영상 추적 기준선"]
+    B --> C["완료 · TAP-Vid-DAVIS 단일 영상 비교"]
+    C --> D["다음 · 여러 영상에서 정확도와 가림 복구 검증"]
+    D --> E["대기 · 웹캠 지연 및 px/mm 보정"]
+    F["완료 · 합성 깊이 영상의 3D 점군 변환"] --> G["대기 · StreamVGGT 순차 복원과 TUM RGB-D 비교"]
+```
+
+## 공개 데이터 비교
+
+`bike-packing` 영상 69프레임에서 두 추적기에 같은 시작점 8개를 사용했습니다.
+
+| 지표 | 고정 템플릿 | Online TAPIR |
+| --- | ---: | ---: |
+| 중앙 위치 오차 | 91.03 px | 7.04 px |
+| 가시 관측 누락률 | 57.7% | 24.6% |
+| 전체 가시 관측 중 정답 4 px 이내 | 3.1% | 23.3% |
+| 가려진 점을 표시한 비율 | 26.6% | 51.3% |
+| 가림 해제 후 복구 | 0/6건 | 2/6건 |
+
+단일 클립 결과입니다. TAPIR의 CPU 실행 시간은 최초 컴파일 포함 24.42초였습니다. 웹캠 실시간 지연과 변위 측정 오차는 아직 측정하지 않았습니다.
+
+[설치 방법과 실험 절차](reality-research-readme.md) · [의존성 목록](requirements.txt) · [측정 결과 JSON](results/davis-comparison.json)
+
+
 ## 초기 결과물
 
 1. **가상 시점 화면** — 라이브로 갱신되는 점군이나 메시를 위·옆·사선에서 조작하고, 미관측 영역과 마지막 갱신 시각을 표시한다.
